@@ -21,30 +21,37 @@ namespace test
             var optionsBuilder = new DbContextOptionsBuilder<TestAppContext>();
             var options = optionsBuilder.UseNpgsql(connectionString).Options;
 
+            if (args.Length==0)
+            {
+                Console.WriteLine("Использование: \ntest.exe импорт [подразделение|сотрудник|должность] file.tsv");
+                Console.WriteLine("test.exe вывод [id]");
+                return;
+            }
+
             // getting mode
-            string? mode = string.Empty;
-            do
+            string? mode = args[0];
+            /*do
             {
                 Console.WriteLine(@"введите режим работы( ""импорт"" или ""вывод"")");
                 mode = Console.ReadLine().Trim().ToLower();
-            }
-
-            while (mode != "импорт" && mode != "вывод");
+            } while (mode != "импорт" && mode != "вывод"); */
 
             // import mode flow
             if (mode == "импорт")
             {
                 // getting file type
-                string? type = string.Empty;
+                string? type = args[1];
+                /*
                 do
                 {
                     Console.WriteLine(@"введите тип( ""подразделение"" ""сотрудник"" ""должность"")");
                     type = Console.ReadLine().Trim().ToLower();
                 }
-                while (type != "подразделение" && type != "сотрудник" && type != "должность");
+                while (type != "подразделение" && type != "сотрудник" && type != "должность"); */
 
                 // getting file name
-                string? fileName = string.Empty;
+                string? fileName = args[2];
+                /*
                 do
                 {
                     Console.WriteLine(@"введите название файла полностью(например, ""departments.tsv"")");
@@ -52,8 +59,13 @@ namespace test
                     if (!File.Exists(fileName))
                         Console.WriteLine("Файл не найден");
                 }
-                while (!File.Exists(fileName));
+                while (!File.Exists(fileName)); */
                 
+                if (!File.Exists(fileName))
+                {
+                    Console.WriteLine("Файл не найден");
+                    return;
+                }
 
                 // initializing import
                 if (type == "подразделение")
@@ -82,9 +94,14 @@ namespace test
                 // asking for optional department id parameter
 
                 var depCount = await Methods.GetDepartmentCount(options);
-                int depId = -1;
-                var r = false;
-                do
+                int depId = 0;
+
+                if (args.Length > 1)
+                {
+                    depId = int.Parse(args[2]);
+                }
+                
+                /*do
                 {
                     Console.WriteLine(@"введите id подразделения, чтобы посмотреть сотрудников только по подразделению либо ""0""(ноль) для вывода сотрудников по всем подразделениям");
                     var inp = Console.ReadLine();
@@ -99,14 +116,14 @@ namespace test
                         Console.WriteLine("введите корректный номер подразделения");
                     }
                 }
-                while (!r);
+                while (!r); */
 
                 if (depId == 0)
                     Methods.Output(options);
                 else
                     Methods.OutputById(options, depId);
 
-                Console.ReadLine();
+                //Console.ReadLine();
             }
 
         }

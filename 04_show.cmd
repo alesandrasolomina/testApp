@@ -1,0 +1,1 @@
+test\bin\Debug\net6.0\test.exe вывод

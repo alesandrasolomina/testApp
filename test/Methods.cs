@@ -129,17 +129,24 @@ namespace test
 
             IEnumerable<string> lines = File.ReadLines(fileName);
             int i = 0;
-            foreach (var line in lines)
+            foreach (var line in lines.Skip(1))
             {
                 //counter to eliminate the headers
+                /*
                 if (i == 0)
                 {
                     i++;
                     continue;
-                }
+                }*/
+                i++;
 
                 var fields = line.Split("\t");
 
+                if (fields.Length < 5)
+                {
+                    Console.Error.WriteLine("Ошибка в строке #{0}, недостаточно данных: {1}", i, line);
+                    continue;
+                }
 
                 var employee = new Employee();
                 try
@@ -150,17 +157,24 @@ namespace test
                     employee.Password = fields[3];
 
                     var department = await GetIdByName(fields[0].Trim(), opt);
-                    if (department != null)
-                        employee.Department = department.DepartmentId;
+                    if (department == null)
+                    {
+                        Console.Error.WriteLine("Ошибка в строке #{0}, не найдено подразделение: {1}", i, fields[0]);
+                        continue;
+                    }
+                    employee.Department = department.DepartmentId;
 
                     var jobtitle = await GetJobtitleByName(fields[4].Trim(), opt);
-                    if (jobtitle != null)
-                        employee.Jobtitle = jobtitle.Id;
-
+                    if (jobtitle == null)
+                    {
+                        Console.Error.WriteLine("Ошибка в строке #{0}, не найдена должность: {1}", i, fields[4]);
+                        continue;
+                    }
+                    employee.Jobtitle = jobtitle.Id;
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine(ex.ToString());
+                    Console.Error.WriteLine("Строка #{0}, ошибка:{1}, {2}", i, ex.Message, ex.Source);
                 }
 
                 await AddEmployee(employee, opt);
@@ -170,7 +184,6 @@ namespace test
                 {
                     await UpdateDepartmentValues(employee.Id, dep, opt);
                 }
-                i++;
             }
 
             Console.WriteLine("сотрудники импортированы успешно");
@@ -375,7 +388,7 @@ namespace test
             }
         }
 
-        static async Task<Department> GetDep(int id, DbContextOptions<TestAppContext> opt)
+        static async Task<Department?> GetDep(int id, DbContextOptions<TestAppContext> opt)
         {
             using (var db = new TestAppContext(opt))
             {
@@ -384,7 +397,7 @@ namespace test
         }
 
 
-        static async Task<DepartmentsName> GetIdByName(string name, DbContextOptions<TestAppContext> opt)
+        static async Task<DepartmentsName?> GetIdByName(string name, DbContextOptions<TestAppContext> opt)
         {
             using (var db = new TestAppContext(opt))
             {
@@ -393,14 +406,14 @@ namespace test
             }
         }
 
-        static async Task<Jobtitle> GetJobtitleByName(string name, DbContextOptions<TestAppContext> opt)
+        static async Task<Jobtitle?> GetJobtitleByName(string name, DbContextOptions<TestAppContext> opt)
         {
             using (var db = new TestAppContext(opt))
             {
                 return await db.Jobtitles.FirstOrDefaultAsync(x => x.Name == name);
             }
         }
-        static async Task<Employee> GetManagerIdByName(string name, DbContextOptions<TestAppContext> opt)
+        static async Task<Employee?> GetManagerIdByName(string name, DbContextOptions<TestAppContext> opt)
         {
             using (var db = new TestAppContext(opt))
             {
